@@ -1,8 +1,13 @@
-global DEVICE_NAME, mqtt, wifi
+# generic python modules
+import time
+import json
+# Micropython modules
+import machine
+import esp32
+# local modules
+from mcuperipherals import MCUSensor, MCUAction
 
-# ESP32 board settings:
-#  XIAO_ESP32C3 - https://files.seeedstudio.com/wiki/XIAO_WiFi/pin_map-2.png
-BUTTON_PIN = Pin(6, Pin.IN, Pin.PULL_UP)
+global DEVICE_NAME, BUTTON_PIN, mqtt, wifi
 
 def str_runtime(seconds):
   total_hours = int(seconds) // 3600
@@ -59,7 +64,6 @@ def create_mqtt_topic_callback_map(actions):
 
 
 # setup
-MAX_ATTEMPTS = 5
 try:
   SENSORS = [
     MCUSensor(
@@ -93,11 +97,7 @@ try:
   MQTT_SUBSCRIBE_TOPICS_MAP = create_mqtt_topic_callback_map(ACTIONS)
   mqtt_subscribe(MQTT_SUBSCRIBE_TOPICS_MAP.keys())
 except Exception as e:
-  prnt('Setup encountered error (attempt %s/%s):' % (attempt, MAX_ATTEMPTS), repr(e))
-  time.sleep(2)
-  if (attempt == MAX_ATTEMPTS):
-    prnt('MQTT setup failure reached max attempts, reseting ESP32')
-    esp32_reset()
+  prnt('Setup encountered error:', repr(e))
 
 # loop
 while True:
