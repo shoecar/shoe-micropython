@@ -6,6 +6,7 @@ import time
 import network
 import webrepl
 import gc
+import json
 
 # local libraries
 import secrets

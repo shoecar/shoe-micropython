@@ -34,4 +34,6 @@ screen -port $PORT 115200
 
 # serial connect to file system
 rshell -p $PORT -b 115200 --editor code
-edit /pyboard/boot.py
+
+# >>> ls ls /pyboard
+# >>> edit /pyboard/boot.py

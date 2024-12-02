@@ -17,6 +17,15 @@ def esp32_reset(*args):
   prnt('\nESP32 Reset initiating...\n')
   machine.reset()
 
+def build_status_json():
+  json_map = {
+    'runtime': str_runtime(time.time()),
+  }
+  for sensor in SENSORS:
+    if sensor.mqtt_topic:
+      json_map[sensor.mqtt_topic.split('/')[-1]] = sensor.value
+  return json.dumps(json_map)
+
 def mqtt_callback(topic, message):
   prnt('MQTT message arrived\n\t%s: %s' % (topic, message))
 
@@ -48,49 +57,47 @@ def create_mqtt_topic_callback_map(actions):
 
   return mqtt_subscribe_topics_map
 
-# setup
-SENSORS = [
-  MCUSensor(
-    lambda cv: BUTTON_PIN.value() == 0,
-    initial_value=False,
-    publish_interval_s=2,
-    mqtt_topic='{}/out/button_pressed'.format(DEVICE_NAME),
-    mqtt_publish_if_values=[True],
-    mqtt_publish_cb=mqtt_publish,
-  ),
-  MCUSensor(
-    lambda cv: esp32.mcu_temperature(),
-    read_interval_s=60,
-    mqtt_topic='{}/out/esp32/temp'.format(DEVICE_NAME),
-    mqtt_publish_cb=mqtt_publish,
-  ),
-  MCUSensor(
-    lambda cv: wifi.status('rssi'),
-    read_interval_s=60,
-    mqtt_topic='{}/out/esp32/wifi_rssi'.format(DEVICE_NAME),
-    mqtt_publish_cb=mqtt_publish,
-  ),
-]
-ACTIONS = [
-  MCUAction(
-    esp32_reset,
-    mqtt_topic='{}/in/esp32_reset'.format(DEVICE_NAME),
-  )
-]
-MQTT_SUBSCRIBE_TOPICS_MAP = create_mqtt_topic_callback_map(ACTIONS)
 
+# setup
 MAX_ATTEMPTS = 5
-for i in range(MAX_ATTEMPTS):
-  try:
-    mqtt_subscribe(MQTT_SUBSCRIBE_TOPICS_MAP.keys())
-    break
-  except OSError as e:
-    attempt = i + 1
-    prnt('MQTT setup encountered error (attempt %s/%s): %s' % (attempt, MAX_ATTEMPTS, e))
-    time.sleep(2)
-    if (attempt == MAX_ATTEMPTS):
-      prnt('MQTT setup failure reached max attempts, reseting ESP32')
-      esp32_reset()
+try:
+  SENSORS = [
+    MCUSensor(
+      lambda cv: BUTTON_PIN.value() == 0,
+      initial_value=False,
+      publish_interval_s=2,
+      mqtt_topic='{}/out/button_pressed'.format(DEVICE_NAME),
+      mqtt_publish_if_values=[True],
+      mqtt_publish_cb=mqtt_publish,
+    ),
+    MCUSensor(
+      lambda cv: esp32.mcu_temperature(),
+      read_interval_s=60,
+      mqtt_topic='{}/out/esp32/temp'.format(DEVICE_NAME),
+      mqtt_publish_cb=mqtt_publish,
+    ),
+    MCUSensor(
+      lambda cv: wifi.status('rssi'),
+      read_interval_s=60,
+      mqtt_topic='{}/out/esp32/wifi_rssi'.format(DEVICE_NAME),
+      mqtt_publish_cb=lambda t, m: mqtt_publish('{}/out/esp32/status'.format(DEVICE_NAME), build_status_json()),
+    ),
+  ]
+  ACTIONS = [
+    MCUAction(
+      esp32_reset,
+      mqtt_topic='{}/in/esp32_reset'.format(DEVICE_NAME),
+    )
+  ]
+
+  MQTT_SUBSCRIBE_TOPICS_MAP = create_mqtt_topic_callback_map(ACTIONS)
+  mqtt_subscribe(MQTT_SUBSCRIBE_TOPICS_MAP.keys())
+except Exception as e:
+  prnt('Setup encountered error (attempt %s/%s):' % (attempt, MAX_ATTEMPTS), repr(e))
+  time.sleep(2)
+  if (attempt == MAX_ATTEMPTS):
+    prnt('MQTT setup failure reached max attempts, reseting ESP32')
+    esp32_reset()
 
 # loop
 while True:
