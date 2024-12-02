@@ -10,7 +10,7 @@ import gc
 # local libraries
 import secrets
 import mcuconfig as config
-from mcuperipherals import MCUSensor
+from mcuperipherals import MCUSensor, MCUAction
 from umqttsimple import MQTTClient
 
 esp.osdebug(None)

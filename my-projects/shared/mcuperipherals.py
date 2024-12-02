@@ -43,3 +43,12 @@ class MCUSensor:
       if self.mqtt_topic and (not self.mqtt_publish_if_values or new_value in self.mqtt_publish_if_values):
         self.last_publish_at_s = runtime_s
         self.mqtt_publish_cb(self.mqtt_topic, str(new_value))
+
+class MCUAction:
+  def __init__(
+    self,
+    action_cb,
+    mqtt_topic=None,
+  ):
+    self.action_cb = action_cb
+    self.mqtt_topic = mqtt_topic

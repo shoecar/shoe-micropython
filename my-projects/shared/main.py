@@ -11,21 +11,16 @@ def str_runtime(seconds):
 
 def prnt(*args, **kwargs):
   # print(f'[{str_runtime(time.time())}]', *args, **kwargs)
-  # print(f'[{int(time.time())}]', *args, **kwargs)
-  print(*args, **kwargs)
+  print(f'[{int(time.time())}]', *args, **kwargs)
 
 def esp32_reset(*args):
   prnt('\nESP32 Reset initiating...\n')
   machine.reset()
 
-MQTT_SUBSCRIBE_TOPICS = {
-    '{}/in/esp32_reset'.format(DEVICE_NAME): esp32_reset,
-}
-
 def mqtt_callback(topic, message):
   prnt('MQTT message arrived\n\t%s: %s' % (topic, message))
 
-  subscriber_callback = MQTT_SUBSCRIBE_TOPICS[topic]
+  subscriber_callback = MQTT_SUBSCRIBE_TOPICS_MAP[topic]
   if not subscriber_callback:
     prnt('\tNo callback configured for topic: ', topic)
     return
@@ -36,14 +31,22 @@ def mqtt_callback(topic, message):
 def mqtt_subscribe(subscribe_topics):
   mqtt.set_callback(mqtt_callback)
 
-  for topic_sub in subscribe_topics.keys():
+  for topic_sub in subscribe_topics:
     mqtt.subscribe(topic_sub)
 
-  prnt('MQTT subscriptions to %s setup\n\tSubscribed topics: %s\n' % (mqtt.server, ', '.join(subscribe_topics.keys())))
+  prnt('MQTT subscriptions to %s setup\n\tSubscribed topics: %s\n' % (mqtt.server, ', '.join(subscribe_topics)))
 
 def mqtt_publish(topic, message, retain=False, qos=0):
   mqtt.publish(str(topic), str(message), retain, qos)
   prnt('MQTT published\n\t%s: %s' % (topic, message))
+
+def create_mqtt_topic_callback_map(actions):
+  mqtt_subscribe_topics_map = {}
+  for action in actions:
+    if action.mqtt_topic:
+      mqtt_subscribe_topics_map[action.mqtt_topic] = action.action_cb
+
+  return mqtt_subscribe_topics_map
 
 # setup
 SENSORS = [
@@ -68,11 +71,18 @@ SENSORS = [
     mqtt_publish_cb=mqtt_publish,
   ),
 ]
+ACTIONS = [
+  MCUAction(
+    esp32_reset,
+    mqtt_topic='{}/in/esp32_reset'.format(DEVICE_NAME),
+  )
+]
+MQTT_SUBSCRIBE_TOPICS_MAP = create_mqtt_topic_callback_map(ACTIONS)
 
 MAX_ATTEMPTS = 5
 for i in range(MAX_ATTEMPTS):
   try:
-    mqtt_subscribe(MQTT_SUBSCRIBE_TOPICS)
+    mqtt_subscribe(MQTT_SUBSCRIBE_TOPICS_MAP.keys())
     break
   except OSError as e:
     attempt = i + 1
