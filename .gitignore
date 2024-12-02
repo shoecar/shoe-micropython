@@ -1,0 +1,10 @@
+# stores Micropython repo & board bins
+/offical
+
+# stores credentials like WIFI SSID/PASSWORD
+secrets.py
+
+.DS_Store
+**/.DS_Store
+.vscode/
+.code-workspace
