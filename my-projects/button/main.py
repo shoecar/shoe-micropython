@@ -44,7 +44,7 @@ SENSORS = [
     initial_value=False,
     publish_interval_s=2,
     mqtt_topic=BUTTON_PRESSED_TOPIC,
-    mqtt_publish_values=[True],
+    mqtt_publish_if_values=[True],
     mqtt_publish_cb=mqtt_publish,
   ),
 ]

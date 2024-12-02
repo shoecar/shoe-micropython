@@ -1,4 +1,4 @@
-global DEVICE_NAME, mqtt
+global DEVICE_NAME, mqtt, wifi
 
 # ESP32 board settings:
 #  XIAO_ESP32C3 - https://files.seeedstudio.com/wiki/XIAO_WiFi/pin_map-2.png
@@ -11,15 +11,13 @@ def str_runtime(seconds):
 
 def prnt(*args, **kwargs):
   # print(f'[{str_runtime(time.time())}]', *args, **kwargs)
-  print(f'[{int(time.time())}]', *args, **kwargs)
+  # print(f'[{int(time.time())}]', *args, **kwargs)
+  print(*args, **kwargs)
 
 def esp32_reset(*args):
   prnt('\nESP32 Reset initiating...\n')
   machine.reset()
 
-BUTTON_PRESSED_TOPIC = '{}/out/button_pressed'.format(DEVICE_NAME)
-ESP32_TEMP_TOPIC = '{}/out/esp32_temp'.format(NAME)
-MQTT_PUBLISH_TOPICS = [BUTTON_PRESSED_TOPIC, ESP32_TEMP_TOPIC]
 MQTT_SUBSCRIBE_TOPICS = {
     '{}/in/esp32_reset'.format(DEVICE_NAME): esp32_reset,
 }
@@ -35,13 +33,13 @@ def mqtt_callback(topic, message):
     prnt('\tRunning callback "%s" with argument: %s' % (subscriber_callback.__name__, message))
     subscriber_callback(message)
 
-def mqtt_subscribe(subscribe_topics, publish_topics):
+def mqtt_subscribe(subscribe_topics):
   mqtt.set_callback(mqtt_callback)
 
   for topic_sub in subscribe_topics.keys():
     mqtt.subscribe(topic_sub)
 
-  prnt('MQTT subscriptions to %s setup\n\tSubscribed topics: %s\n\tPublish topics: %s\n' % (mqtt.server, ', '.join(subscribe_topics.keys()), ', '.join(publish_topics)))
+  prnt('MQTT subscriptions to %s setup\n\tSubscribed topics: %s\n' % (mqtt.server, ', '.join(subscribe_topics.keys())))
 
 def mqtt_publish(topic, message, retain=False, qos=0):
   mqtt.publish(str(topic), str(message), retain, qos)
@@ -53,14 +51,20 @@ SENSORS = [
     lambda cv: BUTTON_PIN.value() == 0,
     initial_value=False,
     publish_interval_s=2,
-    mqtt_topic=BUTTON_PRESSED_TOPIC,
-    mqtt_publish_values=[True],
+    mqtt_topic='{}/out/button_pressed'.format(DEVICE_NAME),
+    mqtt_publish_if_values=[True],
     mqtt_publish_cb=mqtt_publish,
   ),
   MCUSensor(
     lambda cv: esp32.mcu_temperature(),
     read_interval_s=60,
-    mqtt_topic=ESP32_TEMP_TOPIC,
+    mqtt_topic='{}/out/esp32/temp'.format(DEVICE_NAME),
+    mqtt_publish_cb=mqtt_publish,
+  ),
+  MCUSensor(
+    lambda cv: wifi.status('rssi'),
+    read_interval_s=60,
+    mqtt_topic='{}/out/esp32/wifi_rssi'.format(DEVICE_NAME),
     mqtt_publish_cb=mqtt_publish,
   ),
 ]
@@ -68,7 +72,7 @@ SENSORS = [
 MAX_ATTEMPTS = 5
 for i in range(MAX_ATTEMPTS):
   try:
-    mqtt_subscribe(MQTT_SUBSCRIBE_TOPICS, MQTT_PUBLISH_TOPICS)
+    mqtt_subscribe(MQTT_SUBSCRIBE_TOPICS)
     break
   except OSError as e:
     attempt = i + 1

@@ -23,7 +23,6 @@ class MCUSensor:
     self.mqtt_topic = mqtt_topic
     self.mqtt_publish_cb = mqtt_publish_cb
     self.mqtt_publish_if_values = mqtt_publish_if_values
-    self.mqtt_publish = mqtt_publish
 
     assert self.mqtt_topic == self.mqtt_publish_cb or self.mqtt_topic and self.mqtt_publish_cb, "Must set mqtt_topic AND mqtt_publish_cb"
 
@@ -41,6 +40,6 @@ class MCUSensor:
     new_value = self.read_cb(self.value)
     if new_value != self.value:
       self.value = new_value
-      if self.mqtt_topic and new_value in self.mqtt_publish_if_values:
+      if self.mqtt_topic and (not self.mqtt_publish_if_values or new_value in self.mqtt_publish_if_values):
         self.last_publish_at_s = runtime_s
         self.mqtt_publish_cb(self.mqtt_topic, str(new_value))

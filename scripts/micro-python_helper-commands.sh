@@ -17,13 +17,15 @@ esptool.py --chip $CHIP --port $PORT --baud 460800 write_flash -z 0x0 $BIN_PATH
 ##############
 # Flash Shared
 
-# register flash bash methods and run flash all
-. $MPROOT/scripts/mpflash.sh && mp_all_flash
+# register flash bash methods
+. $MPROOT/scripts/mpflash.sh
+# run run flash all (make sure to redefine DEFAULT_PORT first, if needed)
+mp_all_flash
 
 ##################
 # Connect to Board
 
-# serial connect to REPL:
+# serial connect to REPL (MAC):
 screen -port $PORT 115200
 
 # setup webrepl in Python REPL:

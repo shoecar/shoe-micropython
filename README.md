@@ -15,4 +15,4 @@ The following files are expected:
 
 ### Flashing Micropython
 
-See `micro-python_helper-commands.sh`
+See `scripts/micro-python_helper-commands.sh` and `scripts/mpflash.sh`

@@ -31,7 +31,7 @@ mp_all_flash() {
 
   mp_flash boot.py "$target_project"/boot.py
   mp_flash main.py "$target_project"/main.py
-  mp_flash config.py "$target_project"/main.py
+  mp_flash mcuconfig.py "$target_project"/main.py
   mp_flash secrets.py
   mp_flash umqttsimple.py
   mp_flash mcuperipherals.py
