@@ -14,7 +14,30 @@ mp_flash() {
   fi
 
   target_file=$([ "$2" = "" ] && echo $SHARED_FILES/"$1" || echo "$2")
-  python3 $MICROPYTHON/tools/pyboard.py -d "$DEFAULT_PORT" -f cp "$target_file" :"$1"
+  python $MICROPYTHON/tools/pyboard.py -d "$DEFAULT_PORT" -f cp "$target_file" :"$1"
+}
+
+mp_write() {
+  if [ "$1" = "" ]; then
+    echo "INVALID: must specify file to flash"
+    return
+  fi
+
+  target_file=$([ "$2" = "" ] && echo $SHARED_FILES/"$1" || echo "$2")
+  extension="${target_file##*.}"
+
+  if [ "$extension" = "py" ]  && [ -x "$(command -v pyminify)" ]; then
+    temp_file=tmp-minified_$(basename "$target_file")
+    echo "Creating temp $temp_file storing minified: $(basename "$target_file")"
+    pyminify "$target_file" > "$temp_file"
+
+    python $MICROPYTHON/tools/pyboard.py -d "$DEFAULT_PORT" -f cp "$temp_file" :"$1"
+
+    echo "Removing $temp_file"
+    rm "$temp_file"
+  else
+    python $MICROPYTHON/tools/pyboard.py -d "$DEFAULT_PORT" -f cp "$target_file" :"$1"
+  fi
 }
 
 mp_rm() {
@@ -23,16 +46,16 @@ mp_rm() {
     return
   fi
 
-  python3 $MICROPYTHON/tools/pyboard.py -d "$DEFAULT_PORT" -f rm :"$1"
+  python $MICROPYTHON/tools/pyboard.py -d "$DEFAULT_PORT" -f rm :"$1"
 }
 
 mp_all_flash() {
   target_project=$([ "$1" = "" ] && echo "$SHARED_FILES" || echo "$1")
 
-  mp_flash boot.py "$target_project"/boot.py
-  mp_flash main.py "$target_project"/main.py
-  mp_flash mcuconfig.py "$target_project"/main.py
-  mp_flash secrets.py
-  mp_flash umqttsimple.py
-  mp_flash mcuperipherals.py
+  mp_write boot.py "$target_project"/boot.py
+  mp_write main.py "$target_project"/main.py
+  mp_write mcuconfig.py "$target_project"/main.py
+  mp_write secrets.py
+  mp_write umqttsimple.py
+  mp_write mcuperipherals.py
 }

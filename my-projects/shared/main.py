@@ -15,8 +15,8 @@ def str_runtime(seconds):
   return f'{total_hours // 24}d {total_hours % 24:02}:{secs_remaining // 60:02}:{secs_remaining % 60:02}'
 
 def prnt(*args, **kwargs):
-  # print(f'[{str_runtime(time.time())}]', *args, **kwargs)
-  print(f'[{int(time.time())}]', *args, **kwargs)
+  print(f'[{str_runtime(time.time())}]', *args, **kwargs)
+  # print(f'[{int(time.time())}]', *args, **kwargs)
 
 def esp32_reset(*args):
   prnt('\nESP32 Reset initiating...\n')

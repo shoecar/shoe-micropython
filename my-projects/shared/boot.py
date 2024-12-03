@@ -1,10 +1,11 @@
 # generic python modules
+import time
 import gc
 # Micropython modules
 import esp
 import network
 import webrepl
-from machine import Pin
+from machine import Pin, reset
 # local modules
 import secrets
 import mcuconfig as config
@@ -29,8 +30,9 @@ def setup_wifi():
         print('WIFI connecting to network:', secrets.WIFI_SSID, end="")
         while not wifi.isconnected():
             print('.', end="")
+            time.sleep(.33)
             pass
-    print('\nWIFI network connected:', wifi.ifconfig(), end="\n\n")
+    print('\nWIFI network connected:', wifi.ifconfig())
 
 def setup_mqtt():
     mqtt_connected = mqtt.safe_connect()
@@ -38,6 +40,7 @@ def setup_mqtt():
 
 def setup_webrepl():
     if config.ENABLE_WEB_REPL:
+        print("\nWebREPL Enabled: ", end="")
         webrepl.start(password=secrets.WEB_REPL_PASSWORD)
 
 # boot logic
