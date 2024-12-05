@@ -88,7 +88,7 @@ class MQTTClient:
 
         self.sock.write(premsg, i + 2)
         self.sock.write(msg)
-        #print(hex(len(msg)), hexlify(msg, ":"))
+        print(hex(len(msg)), hexlify(msg, ":"))
         self._send_str(self.client_id)
         if self.lw_topic:
             self._send_str(self.lw_topic)

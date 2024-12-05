@@ -7,7 +7,7 @@ MPROOT=~/Dropbox/code/micropython
 # Initial Board Setup
 
 # ESP32C3 bin source from: https://micropython.org/download/ESP32_GENERIC_C3/
-BIN_PATH=$MPROOT/offical/board-bins/ESP32_GENERIC_C3-20241025-v1.24.0.bin
+BIN_PATH=$MPROOT/official/board-bins/ESP32_GENERIC_C3-20241025-v1.24.0.bin
 CHIP=esp32c3 # set to board type matching .bin
 
 esptool.py --chip $CHIP --port $PORT erase_flash

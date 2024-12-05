@@ -3,7 +3,7 @@
 DEFAULT_PORT=/dev/cu.usbmodem101
 
 MPROOT=~/Dropbox/code/micropython
-MICROPYTHON=$MPROOT/offical/micropython-1.24.0
+MICROPYTHON=$MPROOT/official/micropython-1.24.0
 
 SHARED_FILES=$MPROOT/my-projects/shared/
 

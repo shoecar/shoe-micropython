@@ -16,7 +16,6 @@ def str_runtime(seconds):
 
 def prnt(*args, **kwargs):
   print(f'[{str_runtime(time.time())}]', *args, **kwargs)
-  # print(f'[{int(time.time())}]', *args, **kwargs)
 
 def esp32_reset(*args):
   prnt('\nESP32 Reset initiating...\n')
@@ -64,49 +63,44 @@ def create_mqtt_topic_callback_map(actions):
 
 
 # setup
-try:
-  SENSORS = [
-    MCUSensor(
-      lambda cv: BUTTON_PIN.value() == 0,
-      initial_value=False,
-      publish_interval_s=2,
-      mqtt_topic='{}/out/button_pressed'.format(DEVICE_NAME),
-      mqtt_publish_if_values=[True],
-      mqtt_publish_cb=mqtt_publish,
-    ),
-    MCUSensor(
-      lambda cv: esp32.mcu_temperature(),
-      read_interval_s=60,
-      mqtt_topic='{}/out/esp32/temp'.format(DEVICE_NAME),
-      mqtt_publish_cb=mqtt_publish,
-    ),
-    MCUSensor(
-      lambda cv: wifi.status('rssi'),
-      read_interval_s=60,
-      mqtt_topic='{}/out/esp32/wifi_rssi'.format(DEVICE_NAME),
-      mqtt_publish_cb=lambda t, m: mqtt_publish('{}/out/esp32/status'.format(DEVICE_NAME), build_status_json()),
-    ),
-  ]
-  ACTIONS = [
-    MCUAction(
-      esp32_reset,
-      mqtt_topic='{}/in/esp32_reset'.format(DEVICE_NAME),
-    )
-  ]
+SENSORS = [
+  MCUSensor(
+    lambda cv: BUTTON_PIN.value() == 0,
+    initial_value=False,
+    publish_interval_s=2,
+    mqtt_topic='{}/out/button_pressed'.format(DEVICE_NAME),
+    mqtt_publish_if_values=[True],
+    mqtt_publish_cb=mqtt_publish,
+  ),
+  MCUSensor(
+    lambda cv: esp32.mcu_temperature(),
+    read_interval_s=60,
+    mqtt_topic='{}/out/esp32/temp'.format(DEVICE_NAME),
+    mqtt_publish_cb=mqtt_publish,
+  ),
+  MCUSensor(
+    lambda cv: wifi.status('rssi'),
+    read_interval_s=60,
+    mqtt_topic='{}/out/esp32/wifi_rssi'.format(DEVICE_NAME),
+    mqtt_publish_cb=lambda t, m: mqtt_publish('{}/out/esp32/status'.format(DEVICE_NAME), build_status_json()),
+  ),
+]
+ACTIONS = [
+  MCUAction(
+    esp32_reset,
+    mqtt_topic='{}/in/esp32_reset'.format(DEVICE_NAME),
+  )
+]
 
-  MQTT_SUBSCRIBE_TOPICS_MAP = create_mqtt_topic_callback_map(ACTIONS)
-  mqtt_subscribe(MQTT_SUBSCRIBE_TOPICS_MAP.keys())
-except Exception as e:
-  prnt('Setup encountered error:', repr(e))
+MQTT_SUBSCRIBE_TOPICS_MAP = create_mqtt_topic_callback_map(ACTIONS)
+mqtt_subscribe(MQTT_SUBSCRIBE_TOPICS_MAP.keys())
 
 # loop
 while True:
-  time.sleep(0.1)
+  time.sleep_ms(100)
 
-  try:
+  if MQTT_SUBSCRIBE_TOPICS_MAP:
     mqtt.check_msg()
 
-    for sensor in SENSORS:
-      sensor.read()
-  except Exception as e:
-    prnt('Main loop encountered error:', repr(e))
+  for sensor in SENSORS:
+    sensor.read()
